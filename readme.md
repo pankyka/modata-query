@@ -54,3 +54,40 @@ You can use with Angular $resource to get the query string:
 var User = $resource('/user/:userId', {userId:'@id'});
 var found = User.query(MODataquery(filter));
 ```
+
+Or with kendo.DataSource:
+
+```
+app.factory("someDataSource", function (Thing, MODataQuery) {
+    return function () {
+        return new kendo.data.DataSource({
+            serverFiltering: true,
+            serverPaging: true,
+            serverSorting: true,
+            pageSize: 10,
+            transport: {
+                read: function (options) {
+                    let query = MODataQuery(options.data);
+                    Thing.query(query).$promise.then(function (result) {
+                        options.success(result);
+                    }, function (err) {
+                        options.error(err);
+                    });
+                }
+            },
+            schema: {
+                total: function (data) {
+                    return data ? data.count : 0;
+                },
+                data: function (data) {
+                    return data ? data.data : [];
+                }
+            },            
+            sort: [
+                { field: "field1", dir: "asc" },
+                { field: "field2", dir: "asc" }
+            ]
+        });
+    };
+});
+```
